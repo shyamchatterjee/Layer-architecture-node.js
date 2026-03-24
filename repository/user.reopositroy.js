@@ -16,6 +16,10 @@ class Userrepository {
     let user = await User.findOne({ email: deta?.email });
     return user;
   }
+  async getuser(id) {
+    let user = await User.findById(id);
+    return user;
+  }
 }
 
 module.exports = new Userrepository();

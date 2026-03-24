@@ -42,16 +42,68 @@ class Usercontroller {
           .status(400)
           .json({ ok: false, massage: "invailed password" });
       }
-      let token = jwt.sign({ id: user._id }, "token");
+      let accsesToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "15min",
+      });
+      let refreshToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "7d",
+      });
       return res
-        .cookie(token)
+        .cookie("accessToken", accsesToken, {
+          httpOnly: true,
+          secure: true,
+          maxAge: 15 * 60 * 1000,
+        })
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
         .status(200)
-        .json({ ok: true, massage: "You're login" });
+        .json({ ok: true, massage: "You're login", accessToken: accsesToken });
     } catch (err) {
       console.log(err);
       return res.status(500).json({ ok: false, massage: "Server error" });
     }
   }
-}
+  async getuser(req, res) {
+    let user = await userservice.getuser(req.user._id);
+    if (!user) {
+      return res.status(400).json({ ok: false, massage: "Unvalied user" });
+    }
+    return res.status(200).json({ ok: true, user: user });
+  }
+  async refreshToken(req, res) {
+    try {
+      let token = req?.cookies?.refreshToken;
+      if (!token) {
+        return res.status(400).json({ ok: false, massage: "Plaese logged in" });
+      }
+      let decoded = jwt.verify(token, process.env.SECRET_KEY);
+      let user = await userservice.getuser(decoded?.id);
+      let accessToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "15min",
+      });
+      let refreshToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "7d",
+      });
 
+      res
+        .cookie("accessToken", accessToken, {
+          httpOnly: true,
+          secure: false,
+          maxAge: 15 * 60 * 1000,
+        })
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: false,
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
+        .status(200)
+        .json({ ok: true, massage: "set Token" });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+}
 module.exports = new Usercontroller();

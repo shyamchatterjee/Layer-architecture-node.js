@@ -13,6 +13,12 @@ class Userservice {
       return user;
     }
   }
+  async getuser(id) {
+    let user = await userReopositroy.getuser(id);
+    if (user) {
+      return user;
+    }
+  }
 }
 
 module.exports = new Userservice();
