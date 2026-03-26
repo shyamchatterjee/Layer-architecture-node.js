@@ -7,7 +7,7 @@ class Userrepository {
       name: deta?.name,
       email: deta?.email,
       password: password,
-      image: image?.originalname,
+      image: image?.path,
     });
     return user;
   }
